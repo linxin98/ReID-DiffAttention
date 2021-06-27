@@ -170,7 +170,7 @@ class Baseline(nn.Module):
     in_planes = 2048
 
     def __init__(self, num_classes, last_stride=1,
-                 model_path='/root/.cache/torch/hub/checkpoints/resnet50-19c8e357.pth', neck='bnneck',
+                 model_path='/root/.cache/torch/hub/checkpoints/resnet50-0676ba61.pth', neck='bnneck',
                  neck_feat='after', model_name='resnet50', pretrain_choice='imagenet'):
         super(Baseline, self).__init__()
         if model_name == 'resnet18':
