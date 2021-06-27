@@ -62,6 +62,8 @@ if __name__ == '__main__':
         base_model = bag_tricks.Baseline(num_classes)
     else:
         base_model = resnet.ResNet50(num_classes)
+    if use_gpu:
+        base_model = base_model.to(device)
 
     # 3 data
     dataset_style = config['dataset']['style']
@@ -129,7 +131,7 @@ if __name__ == '__main__':
     base_lambda_function = lambda_calculator.get_lambda_calculator(milestones=[40, 70], warmup=warmup)
     base_scheduler = LambdaLR(base_optimizer, base_lambda_function)
     # 5.2 Get center loss optimizer.
-    center_optimizer = SGD(base_model.parameters(), lr=center_loss_lr, weight_decay=0.0005)
+    center_optimizer = SGD(center_loss_function.parameters(), lr=center_loss_lr, weight_decay=0.0005)
     center_lambda_function = lambda_calculator.get_lambda_calculator(milestones=[40, 70], warmup=False)
     center_scheduler = LambdaLR(center_optimizer, center_lambda_function)
 
@@ -169,7 +171,7 @@ if __name__ == '__main__':
         all_losses = []
         accs = []
         iteration = 0
-        logger.info('Epoch[{}] start.'.format(epoch))
+        logger.info('Epoch[{}/{}] start.'.format(epoch, epochs))
         for images, class_indexs, _, _ in train_loader:
             # 7.3 Start iteration.
             iteration += 1
@@ -198,7 +200,7 @@ if __name__ == '__main__':
                     index += 1
             triplet_loss = triplet_loss_function(distance_matrix) * triplet_loss_weight
             # center loss
-            center_loss = center_loss_function(features, class_indexs) * center_loss_weight
+            center_loss = center_loss_function(features, copy.deepcopy(class_indexs)) * center_loss_weight
             # reg loss
             reg_loss = reg_loss_function(base_model) * reg_loss_weight
             # all loss
@@ -232,15 +234,15 @@ if __name__ == '__main__':
         # 7.6 End epoch.
         epoch_end = time.time()
         # 7.6.1 Summary epoch.
-        logger.info('Epoch[{}] Loss: {:.3f} Acc: {:.3f} Base Lr: {:.2e}'
-                    .format(epoch, np.mean(all_losses), np.mean(accs), base_scheduler.get_last_lr()[0]))
-        logger.info('Time taken: ' + time.strftime("%H:%M:%S", time.localtime(epoch_end - epoch_start)))
+        logger.info('Epoch[{}/{}] Loss: {:.3f} Acc: {:.3f} Base Lr: {:.2e}'
+                    .format(epoch, epochs, np.mean(all_losses), np.mean(accs), base_scheduler.get_last_lr()[0]))
+        logger.info('Train time taken: ' + time.strftime("%H:%M:%S", time.localtime(epoch_end - epoch_start)))
         meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
         logger.info('GPU Memory Used(GB): {:.3f} GB'.format(meminfo.used / 1024 ** 3))
-        logger.info('Epoch[{}] ID_Loss: {:.3f}'.format(epoch, np.mean(id_losses)))
-        logger.info('Epoch[{}] Triplet_Loss: {:.3f}'.format(epoch, np.mean(triplet_losses)))
-        logger.info('Epoch[{}] Center_Loss: {:.3f}'.format(epoch, np.mean(center_losses)))
-        logger.info('Epoch[{}] Reg_Loss: {:.3f}'.format(epoch, np.mean(reg_losses)))
+        logger.info('Epoch[{}/{}] ID_Loss: {:.3f}'.format(epoch, epochs, np.mean(id_losses)))
+        logger.info('Epoch[{}/{}] Triplet_Loss: {:.3f}'.format(epoch, epochs, np.mean(triplet_losses)))
+        logger.info('Epoch[{}/{}] Center_Loss: {:.3f}'.format(epoch, epochs, np.mean(center_losses)))
+        logger.info('Epoch[{}/{}] Reg_Loss: {:.3f}'.format(epoch, epochs, np.mean(reg_losses)))
         torch.cuda.empty_cache()
         # 7.6.2 Change learning rate.
         base_scheduler.step()
@@ -309,11 +311,11 @@ if __name__ == '__main__':
                 # Compute CMC and mAP.
                 logger.info('Compute CMC and mAP.')
                 cmc, mAP = cmc_map_function(distance_matrix, query_pids, gallery_pids, query_camids, gallery_camids)
-                for r in [1, 5, 10]:
+                for r in [1]:
                     logger.info("CMC curve, Rank-{}: {:.1%}".format(r, cmc[r - 1]))
                 logger.info("mAP: {:.1%}".format(mAP))
                 val_end = time.time()
-                logger.info('Time taken: ' + time.strftime("%H:%M:%S", time.localtime(val_end - val_start)))
+                logger.info('Val time taken: ' + time.strftime("%H:%M:%S", time.localtime(val_end - val_start)))
             del val_base_model
             torch.cuda.empty_cache()
         # 7.8 Save checkpoint.
