@@ -6,7 +6,7 @@ from data.transform import get_transform
 
 
 def get_image_dataloader(style, path, name, image_size, batch_size, is_train, num_workers=0, pin_memory=False, p=None,
-                         k=None, rea=None):
+                         k=None, rea=False):
     transform = get_transform(size=image_size, is_train=is_train, random_erasing=rea)
     dataset = None
     if style == 'market1501':
@@ -22,7 +22,7 @@ def get_image_dataloader(style, path, name, image_size, batch_size, is_train, nu
 
 
 def get_feature_from_image_dataloader(style, path, name, image_size, model, device, batch_size, is_train, num_workers=0,
-                                      pin_memory=False, norm=None, p=None, k=None, rea=None):
+                                      pin_memory=False, norm=False, p=None, k=None, rea=None):
     transform = get_transform(size=image_size, is_train=is_train, random_erasing=rea)
     origin_dataset = None
     if style == 'market1501':

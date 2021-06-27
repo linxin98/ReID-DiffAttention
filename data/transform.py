@@ -40,7 +40,7 @@ class RandomErasing(object):
         return img
 
 
-def get_transform(size, is_train, random_erasing=True):
+def get_transform(size, is_train, random_erasing=False):
     normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     if is_train:
         if random_erasing:

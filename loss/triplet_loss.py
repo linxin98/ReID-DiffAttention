@@ -12,8 +12,6 @@ class TripletLoss(nn.Module):
         self.soft_margin = soft_margin
 
     def forward(self, distance_matrix):
-        num_batch_images = distance_matrix.shape[0]
-        num_images_per_class = num_batch_images // num_batch_classes
         template = torch.zeros((self.batch_size, self.batch_size))
         for x in range(self.batch_size):
             min = x // self.k * self.k
@@ -29,7 +27,7 @@ class TripletLoss(nn.Module):
         # print(positive_distance[:10], positive_distance.shape)
         negative_distance, _ = torch.sort(negative_distance_matrix)
         # print(negative_distance[:10, :10])
-        negative_distance = negative_distance[:, num_images_per_class]
+        negative_distance = negative_distance[:, self.k]
         # print(negative_distance[:10], negative_distance.shape)
         one = torch.ones(self.batch_size)
         one = -one

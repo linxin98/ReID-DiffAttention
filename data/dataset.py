@@ -68,7 +68,7 @@ class ImageMarket1501Dataset(Dataset):
 
 
 class FeatureFromImageDataset(Dataset):
-    def __init__(self, origin_dataset, model, device, batch_size, norm=None, num_workers=0, pin_memory=False):
+    def __init__(self, origin_dataset, model, device, batch_size, norm=False, num_workers=0, pin_memory=False):
         super(FeatureFromImageDataset, self).__init__()
         self.origin_dataset = origin_dataset
         self.model = model
@@ -99,8 +99,8 @@ class FeatureFromImageDataset(Dataset):
             for images, _, pids, camids in dataloader:
                 images = images.to(self.device)
                 features = self.model(images)
-                if self.norm is not None:
-                    features = torch.nn.functional.normalize(features, p=self.norm, dim=1)
+                if self.norm:
+                    features = torch.nn.functional.normalize(features, p=2, dim=1)
                 features = features.detach().cpu()
                 for i in range(self.batch_size):
                     self.dataset.append((features[i], pids[i], camids[i]))
