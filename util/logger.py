@@ -13,7 +13,7 @@ def get_logger(level='INFO'):
     logger = logging.getLogger()
 
     ch = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s %(module)s %(levelname)s: %(message)s')
+    formatter = logging.Formatter('%(asctime)s: %(message)s')
 
     logger.setLevel(level_relations[level])
     ch.setFormatter(formatter)
