@@ -166,10 +166,10 @@ if __name__ == '__main__':
         for y in range(x + 1, batch_size):
             template1.append(x)
             template2.append(y)
-    base_model.train()
-    center_loss_function.train()
     for epoch in range(1, epochs + 1):
         # 7.2 Start epoch.
+        base_model.train()
+        center_loss_function.train()
         epoch_start = time.time()
         id_loss_averager.reset()
         triplet_loss_averager.reset()
@@ -254,8 +254,7 @@ if __name__ == '__main__':
             logger.info('Start validation every {} epochs at epoch: {}'.format(val_per_epochs, epoch))
             torch.cuda.empty_cache()
             val_start = time.time()
-            val_base_model = copy.deepcopy(base_model)
-            val_base_model.eval()
+            base_model.eval()
             with torch.no_grad():
                 # Get query feature.
                 logger.info('Load query data.')
@@ -265,7 +264,7 @@ if __name__ == '__main__':
                 for query_batch, (query_image, _, pids, camids) in enumerate(query_loader):
                     if use_gpu:
                         query_image = query_image.to(device)
-                    query_feature = val_base_model(query_image)
+                    query_feature = base_model(query_image)
                     query_features.append(query_feature)
                     query_pids.extend(pids)
                     query_camids.extend(camids)
@@ -277,7 +276,7 @@ if __name__ == '__main__':
                 for gallery_batch, (gallery_image, _, pids, camids) in enumerate(gallery_loader):
                     if use_gpu:
                         gallery_image = gallery_image.to(device)
-                    gallery_feature = val_base_model(gallery_image)
+                    gallery_feature = base_model(gallery_image)
                     gallery_features.append(gallery_feature)
                     gallery_pids.extend(pids)
                     gallery_camids.extend(camids)
@@ -318,7 +317,6 @@ if __name__ == '__main__':
                 logger.info("mAP: {:.1%}".format(mAP))
                 val_end = time.time()
                 logger.info('Val time taken: ' + time.strftime("%H:%M:%S", time.localtime(val_end - val_start)))
-            del val_base_model
             torch.cuda.empty_cache()
         # 7.8 Save checkpoint.
         if epoch % save_per_epochs == 0:
