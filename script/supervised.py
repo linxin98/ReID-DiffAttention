@@ -18,7 +18,7 @@ from torch.optim.lr_scheduler import LambdaLR
 sys.path.append("/content/ReID-framework")
 from data import dataloader
 from loss import label_smooth, triplet_loss, center_loss, regularization
-from metric import cmc_map
+from metric import cmc_map, averager
 from model import resnet, bag_tricks
 from optimizer import lambda_calculator
 from util import logger, tool
@@ -138,6 +138,13 @@ if __name__ == '__main__':
     # 6 metric
     # 6.1 Get CMC and mAP metric.
     cmc_map_function = cmc_map.cmc_map
+    # 6.2 Get averagers.
+    id_loss_averager = averager.Averager()
+    triplet_loss_averager = averager.Averager()
+    center_loss_averager = averager.Averager()
+    reg_loss_averager = averager.Averager()
+    all_loss_averager = averager.Averager()
+    acc_averager = averager.Averager()
 
     # 7 train and eval
     epochs = config['trainer'].getint('epochs')
@@ -164,12 +171,12 @@ if __name__ == '__main__':
     for epoch in range(1, epochs + 1):
         # 7.2 Start epoch.
         epoch_start = time.time()
-        id_losses = []
-        triplet_losses = []
-        center_losses = []
-        reg_losses = []
-        all_losses = []
-        accs = []
+        id_loss_averager.reset()
+        triplet_loss_averager.reset()
+        center_loss_averager.reset()
+        reg_loss_averager.reset()
+        all_loss_averager.reset()
+        acc_averager.reset()
         iteration = 0
         logger.info('Epoch[{}/{}] Epoch start.'.format(epoch, epochs))
         for images, class_indexs, _, _ in train_loader:
@@ -214,32 +221,27 @@ if __name__ == '__main__':
                 center_optimizer.step()
             # 7.4.4 Log losses and acc.
             acc = (predict_classes.max(1)[1] == class_indexs).float().mean()
-            acc = acc.item()
-            accs.append(acc)
-            all_loss = all_loss.item()
-            all_losses.append(all_loss)
-            id_loss = id_loss.item()
-            id_losses.append(id_loss)
-            triplet_loss = triplet_loss.item()
-            triplet_losses.append(triplet_loss)
-            center_loss = center_loss.item()
-            center_losses.append(center_loss)
-            reg_loss = reg_loss.item()
-            reg_losses.append(reg_loss)
+            acc_averager.update(acc.item())
+            id_loss_averager.update(id_loss.item())
+            triplet_loss_averager.update(triplet_loss.item())
+            center_loss_averager.update(center_loss.item())
+            reg_loss_averager.update(reg_loss.item())
+            all_loss_averager.update(all_loss.item())
             # 7.5 End iteration.
             # 7.5.1 Summary iteration.
             if iteration % log_iteration == 0:
                 logger.info('Epoch[{}/{}] Iteration[{}] Loss: {:.3f} Acc: {:.3f}'
-                            .format(epoch, epochs, iteration, np.mean(all_losses), np.mean(accs)))
+                            .format(epoch, epochs, iteration, all_loss_averager.get_value(), acc_averager.get_value()))
         # 7.6 End epoch.
         epoch_end = time.time()
         # 7.6.1 Summary epoch.
         logger.info('Epoch[{}/{}] Loss: {:.3f} Acc: {:.3f} Base Lr: {:.2e}'
-                    .format(epoch, epochs, np.mean(all_losses), np.mean(accs), base_scheduler.get_last_lr()[0]))
-        logger.info('Epoch[{}/{}] ID_Loss: {:.3f}'.format(epoch, epochs, np.mean(id_losses)))
-        logger.info('Epoch[{}/{}] Triplet_Loss: {:.3f}'.format(epoch, epochs, np.mean(triplet_losses)))
-        logger.info('Epoch[{}/{}] Center_Loss: {:.3f}'.format(epoch, epochs, np.mean(center_losses)))
-        logger.info('Epoch[{}/{}] Reg_Loss: {:.3f}'.format(epoch, epochs, np.mean(reg_losses)))
+                    .format(epoch, epochs, all_loss_averager.get_value(), acc_averager.get_value(),
+                            base_scheduler.get_last_lr()[0]))
+        logger.info('Epoch[{}/{}] ID_Loss: {:.3f}'.format(epoch, epochs, id_loss_averager.get_value()))
+        logger.info('Epoch[{}/{}] Triplet_Loss: {:.3f}'.format(epoch, epochs, triplet_loss_averager.get_value()))
+        logger.info('Epoch[{}/{}] Center_Loss: {:.3f}'.format(epoch, epochs, center_loss_averager.get_value()))
+        logger.info('Epoch[{}/{}] Reg_Loss: {:.3f}'.format(epoch, epochs, reg_loss_averager.get_value()))
         logger.info('Train time taken: ' + time.strftime("%H:%M:%S", time.localtime(epoch_end - epoch_start)))
         meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
         logger.info('GPU Memory Used(GB): {:.3f} GB'.format(meminfo.used / 1024 ** 3))
