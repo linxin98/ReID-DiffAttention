@@ -35,6 +35,7 @@ if __name__ == '__main__':
     # 1.2 Load config from config file.
     config = configparser.ConfigParser()
     config.read(args.config)
+    tool.print_config(config)
     # 1.3 Get logger.
     logger = logger.get_logger()
     logger.info('Finishing program initialization.')
