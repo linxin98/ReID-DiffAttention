@@ -170,7 +170,6 @@ if __name__ == '__main__':
         # 7.2 Start epoch.
         base_model.train()
         center_loss_function.train()
-        epoch_start = time.time()
         id_loss_averager.reset()
         triplet_loss_averager.reset()
         center_loss_averager.reset()
@@ -179,6 +178,7 @@ if __name__ == '__main__':
         acc_averager.reset()
         iteration = 0
         logger.info('Epoch[{}/{}] Epoch start.'.format(epoch, epochs))
+        epoch_start = time.time()
         for images, class_indexs, _, _ in train_loader:
             # 7.3 Start iteration.
             iteration += 1
@@ -253,8 +253,8 @@ if __name__ == '__main__':
         if epoch % val_per_epochs == 0:
             logger.info('Start validation every {} epochs at epoch: {}'.format(val_per_epochs, epoch))
             torch.cuda.empty_cache()
-            val_start = time.time()
             base_model.eval()
+            val_start = time.time()
             with torch.no_grad():
                 # Get query feature.
                 logger.info('Load query data.')
