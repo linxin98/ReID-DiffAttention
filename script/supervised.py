@@ -8,7 +8,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-import numpy as np
 import pynvml
 import torch
 from torch import nn
@@ -216,10 +215,9 @@ if __name__ == '__main__':
             # 7.4.3 Optimize.
             all_loss.backward()
             base_optimizer.step()
-            if center_optimizer is not None:
-                for param in center_loss_function.parameters():
-                    param.grad.data *= (1. / center_loss_weight)
-                center_optimizer.step()
+            for param in center_loss_function.parameters():
+                param.grad.data *= (1. / center_loss_weight)
+            center_optimizer.step()
             # 7.4.4 Log losses and acc.
             acc = (predict_classes.max(1)[1] == class_indexs).float().mean()
             acc_averager.update(acc.item())
