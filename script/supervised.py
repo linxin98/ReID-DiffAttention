@@ -218,7 +218,7 @@ if __name__ == '__main__':
             base_optimizer.step()
             if center_optimizer is not None:
                 for param in center_loss_function.parameters():
-                    param.grad.data *= (1. / 0.0005)
+                    param.grad.data *= (1. / center_loss_weight)
                 center_optimizer.step()
             # 7.4.4 Log losses and acc.
             acc = (predict_classes.max(1)[1] == class_indexs).float().mean()
