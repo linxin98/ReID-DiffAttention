@@ -172,7 +172,7 @@ if __name__ == '__main__':
         all_losses = []
         accs = []
         iteration = 0
-        logger.info('Epoch[{}/{}] start.'.format(epoch, epochs))
+        logger.info('Epoch[{}/{}] Epoch start.'.format(epoch, epochs))
         for images, class_indexs, _, _ in train_loader:
             # 7.3 Start iteration.
             iteration += 1
@@ -237,13 +237,13 @@ if __name__ == '__main__':
         # 7.6.1 Summary epoch.
         logger.info('Epoch[{}/{}] Loss: {:.3f} Acc: {:.3f} Base Lr: {:.2e}'
                     .format(epoch, epochs, np.mean(all_losses), np.mean(accs), base_scheduler.get_last_lr()[0]))
-        logger.info('Train time taken: ' + time.strftime("%H:%M:%S", time.localtime(epoch_end - epoch_start)))
-        meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
-        logger.info('GPU Memory Used(GB): {:.3f} GB'.format(meminfo.used / 1024 ** 3))
         logger.info('Epoch[{}/{}] ID_Loss: {:.3f}'.format(epoch, epochs, np.mean(id_losses)))
         logger.info('Epoch[{}/{}] Triplet_Loss: {:.3f}'.format(epoch, epochs, np.mean(triplet_losses)))
         logger.info('Epoch[{}/{}] Center_Loss: {:.3f}'.format(epoch, epochs, np.mean(center_losses)))
         logger.info('Epoch[{}/{}] Reg_Loss: {:.3f}'.format(epoch, epochs, np.mean(reg_losses)))
+        logger.info('Train time taken: ' + time.strftime("%H:%M:%S", time.localtime(epoch_end - epoch_start)))
+        meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
+        logger.info('GPU Memory Used(GB): {:.3f} GB'.format(meminfo.used / 1024 ** 3))
         torch.cuda.empty_cache()
         # 7.6.2 Change learning rate.
         base_scheduler.step()

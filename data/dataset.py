@@ -49,11 +49,11 @@ class ImageMarket1501Dataset(Dataset):
         self.pids.sort()
 
     def summary(self):
-        print('-' * 25)
+        print('=' * 25)
         print("Image Dataset Summary:", self.name)
         print('#pids: {:4d}'.format(len(self.pids)))
         print('#images: {:6d}'.format(self.length))
-        print('-' * 25)
+        print('=' * 25)
 
     def __getitem__(self, item):
         (file, pid, camid) = self.dataset[item]
