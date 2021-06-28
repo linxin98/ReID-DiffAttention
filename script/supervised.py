@@ -154,6 +154,7 @@ if __name__ == '__main__':
     save_per_epochs = config['trainer'].getint('save_per_epochs')
     save_path = config['trainer']['save_path']
     save_path = os.path.join(save_path, time.strftime("%Y%m%d", time.localtime()))
+    val_norm = config['trainer'].getboolean('val_norm')
     if not os.path.isdir(save_path):
         os.mkdir(save_path)
     # 7.1 Initialize env.
@@ -265,6 +266,8 @@ if __name__ == '__main__':
                     if use_gpu:
                         query_image = query_image.to(device)
                     query_feature = base_model(query_image)
+                    if val_norm:
+                        query_feature = torch.nn.functional.normalize(query_feature, p=2, dim=1)
                     query_features.append(query_feature)
                     query_pids.extend(pids)
                     query_camids.extend(camids)
@@ -277,6 +280,8 @@ if __name__ == '__main__':
                     if use_gpu:
                         gallery_image = gallery_image.to(device)
                     gallery_feature = base_model(gallery_image)
+                    if val_norm:
+                        gallery_feature = torch.nn.functional.normalize(gallery_feature, p=2, dim=1)
                     gallery_features.append(gallery_feature)
                     gallery_pids.extend(pids)
                     gallery_camids.extend(camids)
