@@ -54,7 +54,6 @@ if __name__ == '__main__':
 
     # 2 model
     # models_path is used for loading *.pth.
-    models_path = config['model']['models_path']
     base_model_name = config['model']['base_model_name']
     num_classes = config['model'].getint('num_classes')
     num_feature = config['model'].getint('num_feature')
