@@ -118,8 +118,8 @@ if __name__ == '__main__':
     # 4.3 Get center loss.
     center_loss_function = center_loss.CenterLoss(num_classes=num_classes, feat_dim=num_feature, use_gpu=use_gpu,
                                                   device=device)
-    # 4.4 Get regularization loss.
-    reg_loss_function = regularization.Regularization(p=reg_loss_p)
+    # # 4.4 Get regularization loss.
+    # reg_loss_function = regularization.Regularization(p=reg_loss_p)
 
     # 5 optimizer
     init_lr = config['optimizer'].getfloat('init_lr')
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     id_loss_averager = averager.Averager()
     triplet_loss_averager = averager.Averager()
     center_loss_averager = averager.Averager()
-    reg_loss_averager = averager.Averager()
+    # reg_loss_averager = averager.Averager()
     all_loss_averager = averager.Averager()
     acc_averager = averager.Averager()
 
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         id_loss_averager.reset()
         triplet_loss_averager.reset()
         center_loss_averager.reset()
-        reg_loss_averager.reset()
+        # reg_loss_averager.reset()
         all_loss_averager.reset()
         acc_averager.reset()
         iteration = 0
@@ -210,10 +210,11 @@ if __name__ == '__main__':
             triplet_loss = triplet_loss_function(distance_matrix) * triplet_loss_weight
             # center loss
             center_loss = center_loss_function(features, copy.deepcopy(class_indexs)) * center_loss_weight
-            # reg loss
-            reg_loss = reg_loss_function(base_model) * reg_loss_weight
+            # # reg loss
+            # reg_loss = reg_loss_function(base_model) * reg_loss_weight
             # all loss
-            all_loss = id_loss + triplet_loss + center_loss + reg_loss
+            # all_loss = id_loss + triplet_loss + center_loss + reg_loss
+            all_loss = id_loss + triplet_loss + center_loss
             # 7.4.3 Optimize.
             all_loss.backward()
             base_optimizer.step()
@@ -226,7 +227,7 @@ if __name__ == '__main__':
             id_loss_averager.update(id_loss.item())
             triplet_loss_averager.update(triplet_loss.item())
             center_loss_averager.update(center_loss.item())
-            reg_loss_averager.update(reg_loss.item())
+            # reg_loss_averager.update(reg_loss.item())
             all_loss_averager.update(all_loss.item())
             # 7.5 End iteration.
             # 7.5.1 Summary iteration.
@@ -242,7 +243,7 @@ if __name__ == '__main__':
         logger.info('Epoch[{}/{}] ID_Loss: {:.3f}'.format(epoch, epochs, id_loss_averager.get_value()))
         logger.info('Epoch[{}/{}] Triplet_Loss: {:.3f}'.format(epoch, epochs, triplet_loss_averager.get_value()))
         logger.info('Epoch[{}/{}] Center_Loss: {:.3f}'.format(epoch, epochs, center_loss_averager.get_value()))
-        logger.info('Epoch[{}/{}] Reg_Loss: {:.3f}'.format(epoch, epochs, reg_loss_averager.get_value()))
+        # logger.info('Epoch[{}/{}] Reg_Loss: {:.3f}'.format(epoch, epochs, reg_loss_averager.get_value()))
         logger.info('Train time taken: ' + time.strftime("%H:%M:%S", time.localtime(epoch_end - epoch_start)))
         meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
         logger.info('GPU Memory Used(GB): {:.3f} GB'.format(meminfo.used / 1024 ** 3))
