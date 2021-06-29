@@ -1,6 +1,6 @@
 from torch.utils.data import DataLoader
 
-from data.Sampler import TripletSampler
+from data.sampler import TripletSampler
 from data.dataset import ImageMarket1501Dataset, FeatureFromImageDataset
 from data.transform import get_transform
 
