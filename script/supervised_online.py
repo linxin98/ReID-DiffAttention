@@ -137,7 +137,7 @@ if __name__ == '__main__':
     base_lambda_function = lambda_calculator.get_lambda_calculator(milestones=[40, 70], warmup=warmup)
     base_scheduler = LambdaLR(base_optimizer, base_lambda_function)
     # 5.2 Get diff attention model optimizer.
-    diff_attention_optimizer = Adam(diff_attention_model.parameters(), lr=init_lr, weight_decay=0.0005)
+    diff_attention_optimizer = Adam(diff_attention_model.parameters(), lr=init_lr)
     diff_attention_lambda_function = lambda_calculator.get_lambda_calculator(milestones=[40, 70], warmup=warmup)
     diff_attention_scheduler = LambdaLR(diff_attention_optimizer, diff_attention_lambda_function)
     # 5.3 Get center loss optimizer.
@@ -203,6 +203,8 @@ if __name__ == '__main__':
                 images = images.to(device)
                 class_indexs = class_indexs.to(device)
             predict_classes, features = base_model(images)
+            if norm:
+                query_feature = torch.nn.functional.normalize(query_feature, p=2, dim=1)
             features1 = features[template1, :]
             features2 = features[template2, :]
             features1, features2 = diff_attention_model(features1, features2, keep_dim=True)
@@ -223,7 +225,7 @@ if __name__ == '__main__':
             # center loss
             center_loss = center_loss_function(features, copy.deepcopy(class_indexs)) * center_loss_weight
             # reg loss
-            reg_loss = reg_loss_function(base_model) * reg_loss_weight
+            reg_loss = reg_loss_function(diff_attention_model) * reg_loss_weight
             # all loss
             all_loss = id_loss + triplet_loss + center_loss + reg_loss
             # 7.4.3 Optimize.
@@ -281,7 +283,7 @@ if __name__ == '__main__':
                     if use_gpu:
                         query_image = query_image.to(device)
                     query_feature = base_model(query_image)
-                    if val_norm:
+                    if norm:
                         query_feature = torch.nn.functional.normalize(query_feature, p=2, dim=1)
                     query_features.append(query_feature)
                     query_pids.extend(pids)
@@ -295,7 +297,7 @@ if __name__ == '__main__':
                     if use_gpu:
                         gallery_image = gallery_image.to(device)
                     gallery_feature = base_model(gallery_image)
-                    if val_norm:
+                    if norm:
                         gallery_feature = torch.nn.functional.normalize(gallery_feature, p=2, dim=1)
                     gallery_features.append(gallery_feature)
                     gallery_pids.extend(pids)
@@ -310,15 +312,15 @@ if __name__ == '__main__':
                     for gallery_feature in gallery_features:
                         n = gallery_feature.shape[0]
 
-                        template1 = []
-                        template2 = []
+                        val_template1 = []
+                        val_template2 = []
                         for x in range(0, m):
                             for y in range(0, n):
                                 template1.append(x)
                                 template2.append(y)
 
-                        new_query_feature = query_feature[template1, :]
-                        new_gallery_feature = gallery_feature[template2, :]
+                        new_query_feature = query_feature[val_template1, :]
+                        new_gallery_feature = gallery_feature[val_template2, :]
                         new_query_feature, new_gallery_feature = diff_attention_model(new_query_feature,
                                                                                       new_gallery_feature,
                                                                                       keep_dim=True)
