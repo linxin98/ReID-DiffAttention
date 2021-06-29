@@ -153,7 +153,6 @@ if __name__ == '__main__':
     save_per_epochs = config['trainer'].getint('save_per_epochs')
     save_path = config['trainer']['save_path']
     save_path = os.path.join(save_path, time.strftime("%Y%m%d", time.localtime()))
-    val_norm = config['trainer'].getboolean('val_norm')
     if not os.path.isdir(save_path):
         os.mkdir(save_path)
     # 7.1 Initialize env.
