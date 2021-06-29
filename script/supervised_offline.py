@@ -129,7 +129,7 @@ if __name__ == '__main__':
     warmup = config['optimizer'].getboolean('warmup')
     # 5.1 Get diff attention model optimizer.
     diff_attention_optimizer = Adam(diff_attention_model.parameters(), lr=init_lr)
-    diff_attention_lambda_function = lambda_calculator.get_lambda_calculator(milestones=[40, 70], warmup=warmup)
+    diff_attention_lambda_function = lambda_calculator.get_lambda_calculator(milestones=[20, 40], warmup=warmup)
     diff_attention_scheduler = LambdaLR(diff_attention_optimizer, diff_attention_lambda_function)
 
     # 6 metric
@@ -211,7 +211,7 @@ if __name__ == '__main__':
         # 7.6 End epoch.
         epoch_end = time.time()
         # 7.6.1 Summary epoch.
-        logger.info('Epoch[{}/{}] Loss: {:.3f} Acc: {:.3f} Base Lr: {:.2e}'
+        logger.info('Epoch[{}/{}] Loss: {:.3f} Base Lr: {:.2e}'
                     .format(epoch, epochs, all_loss_averager.get_value(), diff_attention_scheduler.get_last_lr()[0]))
         logger.info('Epoch[{}/{}] Triplet_Loss: {:.3f}'.format(epoch, epochs, triplet_loss_averager.get_value()))
         logger.info('Epoch[{}/{}] Reg_Loss: {:.3f}'.format(epoch, epochs, reg_loss_averager.get_value()))

@@ -102,16 +102,16 @@ class FeatureFromImageDataset(Dataset):
                 if self.norm:
                     features = torch.nn.functional.normalize(features, p=2, dim=1)
                 features = features.detach().cpu()
-                for i in range(self.batch_size):
+                for i in range(features.shape[0]):
                     self.dataset.append((features[i], pids[i], camids[i]))
         print('Finished.')
 
     def summary(self):
-        print('-' * 25)
+        print('=' * 25)
         print("Feature Dataset Summary:", self.name)
         print('#pids: {:4d}'.format(len(self.pids)))
         print('#images: {:6d}'.format(self.length))
-        print('-' * 25)
+        print('=' * 25)
 
     def __getitem__(self, item):
         (feature, pid, camid) = self.dataset[item]
