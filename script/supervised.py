@@ -299,8 +299,8 @@ if __name__ == '__main__':
                         val_template2 = []
                         for x in range(0, m):
                             for y in range(0, n):
-                                template1.append(x)
-                                template2.append(y)
+                                val_template1.append(x)
+                                val_template2.append(y)
 
                         new_query_feature = query_feature[val_template1, :]
                         new_gallery_feature = gallery_feature[val_template2, :]

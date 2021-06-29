@@ -204,7 +204,7 @@ if __name__ == '__main__':
                 class_indexs = class_indexs.to(device)
             predict_classes, features = base_model(images)
             if norm:
-                query_feature = torch.nn.functional.normalize(query_feature, p=2, dim=1)
+                features = torch.nn.functional.normalize(features, p=2, dim=1)
             features1 = features[template1, :]
             features2 = features[template2, :]
             features1, features2 = diff_attention_model(features1, features2, keep_dim=True)
@@ -316,8 +316,8 @@ if __name__ == '__main__':
                         val_template2 = []
                         for x in range(0, m):
                             for y in range(0, n):
-                                template1.append(x)
-                                template2.append(y)
+                                val_template1.append(x)
+                                val_template2.append(y)
 
                         new_query_feature = query_feature[val_template1, :]
                         new_gallery_feature = gallery_feature[val_template2, :]
