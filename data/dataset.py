@@ -96,7 +96,11 @@ class FeatureFromImageDataset(Dataset):
         print('Detect feature...')
         with torch.no_grad():
             self.model.eval()
+            epoch = 0
             for images, _, pids, camids in dataloader:
+                epoch += 1
+                if epoch % 20 == 0:
+                    print('Epoch:{}...'.format(epoch))
                 images = images.to(self.device)
                 features = self.model(images)
                 if self.norm:
