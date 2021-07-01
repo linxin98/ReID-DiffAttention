@@ -343,9 +343,10 @@ if __name__ == '__main__':
                 logger.info('Val time taken: ' + time.strftime("%H:%M:%S", time.localtime(val_end - val_start)))
             torch.cuda.empty_cache()
         # 7.8 Save checkpoint.
-        if epoch % save_per_epochs == 0:
-            logger.info('Save checkpoint every {} epochs at epoch: {}'.format(save_per_epochs, epoch))
-            base_save_name = 'supervise online-' + 'base-' + str(epoch) + '.pth'
-            torch.save(base_model.state_dict(), os.path.join(save_path, base_save_name))
-            diff_attention_save_name = 'supervise online-' + 'diff-' + str(epoch) + '.pth'
-            torch.save(diff_attention_model.state_dict(), os.path.join(save_path, diff_attention_save_name))
+        if save:
+            if epoch % save_per_epochs == 0:
+                logger.info('Save checkpoint every {} epochs at epoch: {}'.format(save_per_epochs, epoch))
+                base_save_name = 'supervise online-' + 'base-' + str(epoch) + '.pth'
+                torch.save(base_model.state_dict(), os.path.join(save_path, base_save_name))
+                diff_attention_save_name = 'supervise online-' + 'diff-' + str(epoch) + '.pth'
+                torch.save(diff_attention_model.state_dict(), os.path.join(save_path, diff_attention_save_name))
