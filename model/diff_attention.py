@@ -6,28 +6,39 @@ import torch.nn.functional as F
 
 
 class DiffAttentionNet(nn.Module):
-    def __init__(self, num_feature, in_transform, diff_ratio, out_transform):
+    def __init__(self, num_feature, in_transform, diff_ratio, out_transform, use_origin=True):
         super(DiffAttentionNet, self).__init__()
         self.num_feature = num_feature
         self.in_transform = in_transform
         self.diff_ratio = diff_ratio
         self.out_transform = out_transform
+        self.use_origin = use_origin
 
-        self.fc1 = nn.Linear(self.num_feature, self.num_feature // self.diff_ratio)
-        self.fc2 = nn.Linear(self.num_feature // self.diff_ratio, self.num_feature)
+        self.conv1 = nn.Conv1d(in_channels=3, out_channels=1, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm1d(1)
+        self.conv2 = nn.Conv1d(in_channels=1, out_channels=1, kernel_size=1, bias=False)
+        self.bn2 = nn.BatchNorm1d(1)
 
     def forward(self, x, y, keep_dim=True):
+        # Make diff.
         diff = x - y
         if self.in_transform == 'abs':
-            diff_attention = torch.abs(diff)
+            diff = torch.abs(diff)
         elif self.in_transform == 'square':
-            diff_attention = torch.square(diff)
+            diff = torch.square(diff)
         else:
-            diff_attention = copy.deepcopy(diff)
-
-        diff_attention = F.relu(self.fc1(diff_attention))
-        diff_attention = self.fc2(diff_attention)
-
+            pass
+        # Concentrate.
+        input = torch.stack((diff, x, y), 1)
+        # Calculate attention.
+        print(input.size())
+        diff_attention = F.relu(self.bn1(self.conv1(input)))
+        print(diff_attention.size())
+        diff_attention = self.bn2(self.conv2(diff_attention))
+        print(diff_attention.size())
+        diff_attention = torch.square(diff_attention)
+        print(diff_attention.size())
+        # Transform output.
         if self.out_transform == 'sigmoid':
             diff_attention = torch.sigmoid(diff_attention)
         else:
@@ -38,6 +49,4 @@ class DiffAttentionNet(nn.Module):
             y_feature = y.mul(diff_attention)
             return x_feature, y_feature
         else:
-            diff = diff.mul(diff_attention)
-            distance = torch.sqrt(torch.sum(torch.square(diff), 1))
-            return distance
+            return diff_attention
