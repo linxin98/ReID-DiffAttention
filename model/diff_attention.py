@@ -19,9 +19,9 @@ class DiffAttentionNet(nn.Module):
         else:
             in_first_channel = 1
         if self.mode != 'global':
-            self.conv1 = nn.Conv1d(in_channels=in_first_channel, out_channels=1, kernel_size=1, bias=False)
+            self.conv1 = nn.Conv1d(in_channels=in_first_channel, out_channels=1, kernel_size=7, padding='same', bias=False)
             self.bn1 = nn.BatchNorm1d(1)
-            self.conv2 = nn.Conv1d(in_channels=1, out_channels=1, kernel_size=1, bias=False)
+            self.conv2 = nn.Conv1d(in_channels=1, out_channels=1, kernel_size=7, padding='same', bias=False)
             self.bn2 = nn.BatchNorm1d(1)
         if self.mode != 'local':
             self.fc1 = nn.Linear(self.num_feature, self.num_feature // self.diff_ratio, bias=False)
