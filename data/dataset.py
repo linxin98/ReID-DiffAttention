@@ -100,7 +100,7 @@ class FeatureFromImageDataset(Dataset):
             for images, _, pids, camids in dataloader:
                 epoch += 1
                 if epoch % 20 == 0:
-                    print('Epoch:{}...'.format(epoch))
+                    print('Batch:{}...'.format(epoch))
                 images = images.to(self.device)
                 features = self.model(images)
                 if self.norm:
