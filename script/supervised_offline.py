@@ -69,7 +69,8 @@ if __name__ == '__main__':
         base_model = base_model.to(device)
     base_model.load_state_dict(torch.load(base_model_path))
     # 2.2 Get diff attention model.
-    diff_attention_model = diff_attention.DiffAttentionNet(num_feature, in_transform, diff_ratio, out_transform)
+    diff_attention_model = diff_attention.DiffAttentionNet(num_feature, in_transform, diff_ratio, out_transform,
+                                                           use_origin=True)
     if use_gpu:
         diff_attention_model = diff_attention_model.to(device)
 
