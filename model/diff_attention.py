@@ -13,8 +13,12 @@ class DiffAttentionNet(nn.Module):
         self.diff_ratio = diff_ratio
         self.out_transform = out_transform
         self.use_origin = use_origin
+        if self.use_origin:
+            in_first_channel = 3
+        else:
+            in_first_channel = 1
 
-        self.conv1 = nn.Conv1d(in_channels=3, out_channels=1, kernel_size=1, bias=False)
+        self.conv1 = nn.Conv1d(in_channels=in_first_channel, out_channels=1, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm1d(1)
         self.conv2 = nn.Conv1d(in_channels=1, out_channels=1, kernel_size=1, bias=False)
         self.bn2 = nn.BatchNorm1d(1)
@@ -29,21 +33,20 @@ class DiffAttentionNet(nn.Module):
         else:
             pass
         # Concentrate.
-        input = torch.stack((diff, x, y), 1)
-        # Calculate attention.
-        print(input.size())
+        if self.use_origin:
+            input = torch.stack((diff, x, y), 1)
+        else:
+            input = torch.stack((diff), 1)
+        # Calculate loacl attention.
         diff_attention = F.relu(self.bn1(self.conv1(input)))
-        print(diff_attention.size())
         diff_attention = self.bn2(self.conv2(diff_attention))
-        print(diff_attention.size())
-        diff_attention = torch.square(diff_attention)
-        print(diff_attention.size())
+        diff_attention = torch.squeeze(diff_attention)
         # Transform output.
         if self.out_transform == 'sigmoid':
             diff_attention = torch.sigmoid(diff_attention)
         else:
             pass
-
+        # Output
         if keep_dim:
             x_feature = x.mul(diff_attention)
             y_feature = y.mul(diff_attention)
