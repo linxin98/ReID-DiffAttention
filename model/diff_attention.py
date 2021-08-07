@@ -30,9 +30,10 @@ class DiffAttentionNet(nn.Module):
         # Aggregate.
         if self.aggregate:
             feature = torch.stack((diff, x, y), 1)
-            feature = F.relu(self.conv1(feature))
+            feature = self.conv1(feature)
+            feature = feature.view(feature.shape[0], -1)
         else:
-            feature = torch.stack(diff, 1)
+            feature = diff
         # Calculate attention.
         diff_attention = F.relu(self.fc1(feature))
         diff_attention = F.relu(self.fc2(diff_attention))
