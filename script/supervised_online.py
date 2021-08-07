@@ -59,7 +59,7 @@ if __name__ == '__main__':
     in_transform = config['model']['in_transform']
     diff_ratio = config['model'].getint('diff_ratio')
     out_transform = config['model']['out_transform']
-    diff_mode = config['model']['mode']
+    aggregate = config['model'].getboolean('aggregate')
     # 2.1 Get feature model.
     if base_model_name == 'bag':
         base_model = bag_tricks.Baseline(num_classes)
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         base_model = base_model.to(device)
     # 2.2 Get diff attention model.
     diff_attention_model = diff_attention.DiffAttentionNet(num_feature, in_transform, diff_ratio, out_transform,
-                                                           use_origin=True, mode=diff_mode)
+                                                           aggregate)
     if use_gpu:
         diff_attention_model = diff_attention_model.to(device)
 
