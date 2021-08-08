@@ -36,7 +36,7 @@ class DiffAttentionNet(nn.Module):
             feature = diff
         # Calculate attention.
         diff_attention = F.relu(self.fc1(feature))
-        diff_attention = F.relu(self.fc2(diff_attention))
+        diff_attention = self.fc2(diff_attention)
         # Transform output.
         if self.out_transform == 'sigmoid':
             diff_attention = torch.sigmoid(diff_attention)
