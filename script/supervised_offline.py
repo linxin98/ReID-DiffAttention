@@ -104,7 +104,7 @@ if __name__ == '__main__':
                                                                 image_size=size, model=base_model, device=device,
                                                                 batch_size=batch_size, is_train=False,
                                                                 num_workers=num_workers, pin_memory=pin_memory,
-                                                                norm=False)
+                                                                norm=norm)
     # 3.3 Get gallery set.
     gallery_path = os.path.join(dataset_path, 'bounding_box_test')
     gallery_name = dataset_name + '_gallery'
@@ -112,7 +112,7 @@ if __name__ == '__main__':
                                                                   name=gallery_name, image_size=size, model=base_model,
                                                                   device=device, batch_size=batch_size, is_train=False,
                                                                   num_workers=num_workers, pin_memory=pin_memory,
-                                                                  norm=False)
+                                                                  norm=norm)
 
     # 4 loss
     triplet_loss_weight = config['loss'].getfloat('triplet_loss_weight')
@@ -274,9 +274,9 @@ if __name__ == '__main__':
                         new_query_feature, new_gallery_feature = diff_attention_model(new_query_feature,
                                                                                       new_gallery_feature,
                                                                                       keep_dim=True)
-                        if norm:
-                            new_query_feature = torch.nn.functional.normalize(new_query_feature, p=2, dim=1)
-                            new_gallery_feature = torch.nn.functional.normalize(new_gallery_feature, p=2, dim=1)
+                        # if norm:
+                        #     new_query_feature = torch.nn.functional.normalize(new_query_feature, p=2, dim=1)
+                        #     new_gallery_feature = torch.nn.functional.normalize(new_gallery_feature, p=2, dim=1)
                         matrix = torch.nn.functional.pairwise_distance(new_query_feature, new_gallery_feature)
                         matrix = matrix.reshape((m, n))
                         distance.append(matrix)
