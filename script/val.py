@@ -126,6 +126,8 @@ if __name__ == '__main__':
         for query_batch, (query_feature, _, pids, camids) in enumerate(query_loader):
             if use_gpu:
                 query_feature = query_feature.to(device)
+            if norm:
+                query_feature = torch.nn.functional.normalize(query_feature, p=2, dim=1)
             query_features.append(query_feature)
             query_pids.extend(pids)
             query_camids.extend(camids)
@@ -137,6 +139,8 @@ if __name__ == '__main__':
         for gallery_batch, (gallery_feature, _, pids, camids) in enumerate(gallery_loader):
             if use_gpu:
                 gallery_feature = gallery_feature.to(device)
+            if norm:
+                gallery_feature = torch.nn.functional.normalize(gallery_feature, p=2, dim=1)
             gallery_features.append(gallery_feature)
             gallery_pids.extend(pids)
             gallery_camids.extend(camids)
@@ -159,9 +163,15 @@ if __name__ == '__main__':
 
                 new_query_feature = query_feature[val_template1, :]
                 new_gallery_feature = gallery_feature[val_template2, :]
+                # if norm:
+                #     new_query_feature = torch.nn.functional.normalize(new_query_feature, p=2, dim=1)
+                #     new_gallery_feature = torch.nn.functional.normalize(new_gallery_feature, p=2, dim=1)
                 new_query_feature, new_gallery_feature = diff_attention_model(new_query_feature,
                                                                               new_gallery_feature,
                                                                               keep_dim=True)
+                # if norm:
+                #     new_query_feature = torch.nn.functional.normalize(new_query_feature, p=2, dim=1)
+                #     new_gallery_feature = torch.nn.functional.normalize(new_gallery_feature, p=2, dim=1)
                 matrix = torch.nn.functional.pairwise_distance(new_query_feature, new_gallery_feature)
                 matrix = matrix.reshape((m, n))
                 distance.append(matrix)
