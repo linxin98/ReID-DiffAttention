@@ -284,8 +284,8 @@ if __name__ == '__main__':
                     if use_gpu:
                         query_image = query_image.to(device)
                     query_feature = base_model(query_image)
-                    if norm:
-                        query_feature = torch.nn.functional.normalize(query_feature, p=2, dim=1)
+                    # if norm:
+                    #     query_feature = torch.nn.functional.normalize(query_feature, p=2, dim=1)
                     query_features.append(query_feature)
                     query_pids.extend(pids)
                     query_camids.extend(camids)
@@ -298,8 +298,8 @@ if __name__ == '__main__':
                     if use_gpu:
                         gallery_image = gallery_image.to(device)
                     gallery_feature = base_model(gallery_image)
-                    if norm:
-                        gallery_feature = torch.nn.functional.normalize(gallery_feature, p=2, dim=1)
+                    # if norm:
+                    #     gallery_feature = torch.nn.functional.normalize(gallery_feature, p=2, dim=1)
                     gallery_features.append(gallery_feature)
                     gallery_pids.extend(pids)
                     gallery_camids.extend(camids)
@@ -322,12 +322,15 @@ if __name__ == '__main__':
 
                         new_query_feature = query_feature[val_template1, :]
                         new_gallery_feature = gallery_feature[val_template2, :]
-                        new_query_feature, new_gallery_feature = diff_attention_model(new_query_feature,
-                                                                                      new_gallery_feature,
-                                                                                      keep_dim=True)
                         # if norm:
                         #     new_query_feature = torch.nn.functional.normalize(new_query_feature, p=2, dim=1)
                         #     new_gallery_feature = torch.nn.functional.normalize(new_gallery_feature, p=2, dim=1)
+                        new_query_feature, new_gallery_feature = diff_attention_model(new_query_feature,
+                                                                                      new_gallery_feature,
+                                                                                      keep_dim=True)
+                        if norm:
+                            new_query_feature = torch.nn.functional.normalize(new_query_feature, p=2, dim=1)
+                            new_gallery_feature = torch.nn.functional.normalize(new_gallery_feature, p=2, dim=1)
                         matrix = torch.nn.functional.pairwise_distance(new_query_feature, new_gallery_feature)
                         matrix = matrix.reshape((m, n))
                         distance.append(matrix)
