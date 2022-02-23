@@ -4,72 +4,97 @@ from collections import defaultdict
 
 import torch
 from PIL import Image
+from torch.functional import _return_inverse
 from torch.utils.data import Dataset, DataLoader
+import numpy as np
+from torch.utils.data.dataset import T
 
 
-class ImageMarket1501Dataset(Dataset):
-    def __init__(self, path, transform, name):
-        super(ImageMarket1501Dataset, self).__init__()
+class ImageDataset(Dataset):
+    def __init__(self, style, path, transform, name, verbose=False):
+        super(ImageDataset, self).__init__()
+        # dataset parameters
+        self.style = style
         self.path = path
         self.transform = transform
         self.name = name
-        self.dataset = []
-        self.pid_index = defaultdict(list)
+        # dataset variables
         self.length = 0
+        self.images = []
         self.pids = []
+        self.camids = []
+        self.labels = []
         # Preprocess dataset.
-        self.process_folder()
-        self.summary()
+        self.process_dataset()
+        if verbose:
+            self.summary_dataset()
 
     def __len__(self):
         return self.length
 
-    def process_folder(self):
+    def process_item(self, item, style):
+        if style == 'market':
+            pattern = re.compile(r'([-\d]+)_c(\d)')
+        # Check item is a file.
+        allow_type = ['jpg', 'png']
+        if not item[-3:] in allow_type:
+            return None
+        pid, camid = map(int, pattern.search(item).groups())
+        if pid == -1 or pid == 0:
+            return None
+        return pid, camid
+
+    def process_dataset(self):
+        # Empty dataset.
+        self.length = 0
+        self.images = []
+        self.pids = []
+        self.camids = []
+        self.labels = []
+        # Load folder.
         files = os.listdir(self.path)
         files.sort()
-        pattern = re.compile(r'([-\d]+)_c(\d)')
-        # Empty dataset.
-        self.dataset = []
-        self.pid_index = defaultdict(list)
-        item_index = 0
         for file in files:
-            if not file[-3:] == 'jpg':
-                continue
-            pid, camid = map(int, pattern.search(file).groups())
-            if pid == -1 or pid == 0:
-                continue
-            # First, add item into dataset.
-            self.dataset.append((file, pid, camid))
-            # Then, count pid.
-            self.pid_index[pid].append(item_index)
-            # Finally, update item_index.
-            item_index += 1
-        self.length = item_index
-        self.pids = list(self.pid_index.keys())
-        self.pids.sort()
+            results = self.process_item(file, self.style)
+            # Add item into dataset.
+            if results is not None:
+                self.length += 1
+                self.images.append(file)
+                self.pids.append(results[0])
+                self.camids.append(results[1])
+        # Create label for classifier.
+        _, labels = np.unique(self.pids, return_inverse=True)
+        self.set_labels(labels)
 
-    def summary(self):
+    def summary_dataset(self):
         print('=' * 25)
         print("Image Dataset Summary:", self.name)
-        print('#pids: {:4d}'.format(len(self.pids)))
-        print('#images: {:6d}'.format(self.length))
+        print('#pid:   {:d}'.format(len(np.unique(self.pids))))
+        print('#image: {:d}'.format(self.length))
         print('=' * 25)
 
-    def __getitem__(self, item):
-        (file, pid, camid) = self.dataset[item]
-        class_index = self.pids.index(pid)
+    def set_labels(self, new_labels):
+        self.labels = new_labels
+
+    def __getitem__(self, index):
+        file = self.images[index]
+        pid = self.pids[index]
+        camid = self.camids[index]
+        label = self.labels[index]
+        # Load image.
         file_path = os.path.join(self.path, file)
         image = Image.open(file_path)
+        # Convert image to tenser.
         if image.mode != 'RGB':
             image = image.convert('RGB')
         if self.transform is not None:
             image = self.transform(image)
-        return image, class_index, pid, camid
+        return image, label, pid, camid
 
 
-class FeatureFromImageDataset(Dataset):
-    def __init__(self, origin_dataset, model, device, batch_size, norm=False, num_workers=0, pin_memory=False):
-        super(FeatureFromImageDataset, self).__init__()
+class FeatureDataset(Dataset):
+    def __init__(self, origin_dataset, model, device, batch_size, norm=False, num_workers=4, pin_memory=False, verbose=False):
+        super(FeatureDataset, self).__init__()
         self.origin_dataset = origin_dataset
         self.model = model
         self.device = device
@@ -77,47 +102,70 @@ class FeatureFromImageDataset(Dataset):
         self.norm = norm
         self.num_workers = num_workers
         self.pin_memory = pin_memory
-        self.dataset = []
-        # Get origin_dataset statistics.
+        self.verbose = verbose
+        # Get statistics from origin_dataset.
+        self.style = self.origin_dataset.style
         self.name = self.origin_dataset.name
-        self.pid_index = self.origin_dataset.pid_index
         self.length = self.origin_dataset.length
+        self.images = self.origin_dataset.images
         self.pids = self.origin_dataset.pids
+        self.camids = self.origin_dataset.camids
+        self.labels = self.origin_dataset.labels
+        # dataset variables
+        self.features = []
         # Preprocess dataset.
         self.detect_feature()
-        self.summary()
+        if verbose:
+            self.summary_dataset()
 
     def __len__(self):
         return self.length
 
     def detect_feature(self):
-        dataloader = DataLoader(dataset=self.origin_dataset, batch_size=self.batch_size, num_workers=self.num_workers,
-                                pin_memory=self.pin_memory)
+        # Empty dataset.
+        self.features = []
+        # Detect feature.
+        dataloader = DataLoader(dataset=self.origin_dataset, batch_size=self.batch_size,
+                                num_workers=self.num_workers, pin_memory=self.pin_memory)
         print('Detect feature...')
         with torch.no_grad():
             self.model.eval()
-            epoch = 0
-            for images, _, pids, camids in dataloader:
-                epoch += 1
-                if epoch % 20 == 0:
-                    print('Batch:{}...'.format(epoch))
+            batch = 0
+            for images, _, _, _ in dataloader:
+                batch += 1
+                if batch % 20 == 0:
+                    print('Batch:{}...'.format(batch))
                 images = images.to(self.device)
                 features = self.model(images)
                 if self.norm:
-                    features = torch.nn.functional.normalize(features, p=2, dim=1)
+                    features = torch.nn.functional.normalize(
+                        features, p=2, dim=1)
                 features = features.detach().cpu()
                 for i in range(features.shape[0]):
-                    self.dataset.append((features[i], pids[i], camids[i]))
-        print('Finished.')
+                    self.features.append(features[i])
+        print('Finish detecting feature.')
 
-    def summary(self):
+    def summary_dataset(self):
         print('=' * 25)
         print("Feature Dataset Summary:", self.name)
-        print('#pids: {:4d}'.format(len(self.pids)))
-        print('#images: {:6d}'.format(self.length))
+        print('#pid:   {:d}'.format(len(np.unique(self.pids))))
+        print('#image: {:d}'.format(self.length))
         print('=' * 25)
 
-    def __getitem__(self, item):
-        (feature, pid, camid) = self.dataset[item]
-        class_index = self.pids.index(pid)
-        return feature, class_index, pid, camid
+    def set_labels(self, new_labels):
+        self.labels = new_labels
+
+    def __getitem__(self, index):
+        feature = self.features[index]
+        pid = self.pids[index]
+        camid = self.camids[index]
+        label = self.labels[index]
+        return feature, label, pid, camid
+
+
+if __name__ == '__main__':
+    style = 'market'
+    path = '../dataset/Market-1501/bounding_box_train'
+    dateset = ImageDataset(style, path, None, 'train', verbose=True)
+    for i in range(100, 120):
+        print(dateset[i])

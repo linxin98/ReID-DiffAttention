@@ -62,14 +62,14 @@ if __name__ == '__main__':
         base_model = base_model.to(device)
     base_model.load_state_dict(torch.load(model_path))
     logger.info('Base Model: ' + str(tool.get_parameter_number(base_model)))
-    # # 2.2 Get Diff Attention Module.
-    # diff_model = diff_attention.DiffAttentionModule(
-    #     num_feature=num_feature, in_transform=in_transform, diff_ratio=diff_ratio, out_transform=out_transform, aggregate=aggregate)
-    # if use_gpu:
-    #     diff_model = diff_model.to(device)
-    # diff_model.load_state_dict(torch.load(diff_model_path))
-    # logger.info('Diff Attention Module: ' +
-    #             str(tool.get_parameter_number(diff_model)))
+    # 2.2 Get Diff Attention Module.
+    diff_model = diff_attention.DiffAttentionModule(
+        num_feature=num_feature, in_transform=in_transform, diff_ratio=diff_ratio, out_transform=out_transform, aggregate=aggregate)
+    if use_gpu:
+        diff_model = diff_model.to(device)
+    diff_model.load_state_dict(torch.load(diff_model_path))
+    logger.info('Diff Attention Module: ' +
+                str(tool.get_parameter_number(diff_model)))
 
     # 3 data
     dataset_style = config['dataset']['style']
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     re_rank = config['val'].getboolean('re_rank')
     minp = config['val'].getboolean('minp')
     base_model.eval()
-    # diff_model.eval()
+    diff_model.eval()
     val_start = time.time()
     with torch.no_grad():
         # Get query feature.
@@ -152,8 +152,8 @@ if __name__ == '__main__':
                         m, n, mode='val')
                     new_query_feature = query_feature[val_template1, :]
                     new_gallery_feature = gallery_feature[val_template2, :]
-                    # new_query_feature, new_gallery_feature = diff_model(
-                    #     new_query_feature, new_gallery_feature, keep_dim=True)
+                    new_query_feature, new_gallery_feature = diff_model(
+                        new_query_feature, new_gallery_feature, keep_dim=True)
                     if val_norm:
                         new_query_feature = torch.nn.functional.normalize(
                             new_query_feature, p=2, dim=1)
@@ -186,8 +186,8 @@ if __name__ == '__main__':
                         m, n, mode='val')
                     new_feature1 = feature1[val_template1, :]
                     new_feature2 = feature2[val_template2, :]
-                    # new_feature1, new_feature2 = diff_model(
-                    #     new_feature1, new_feature2, keep_dim=True)
+                    new_feature1, new_feature2 = diff_model(
+                        new_feature1, new_feature2, keep_dim=True)
                     if val_norm:
                         new_feature1 = torch.nn.functional.normalize(
                             new_feature1, p=2, dim=1)

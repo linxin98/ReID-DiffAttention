@@ -10,14 +10,13 @@ def get_logger(level='INFO'):
         'CRITICAL': logging.CRITICAL
     }
 
+    # Set logger level.
     logger = logging.getLogger()
-
+    logger.setLevel(level_relations[level])
+    # Format logger output.
     ch = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s: %(message)s')
-
-    logger.setLevel(level_relations[level])
     ch.setFormatter(formatter)
-
     logger.addHandler(ch)
 
     return logger

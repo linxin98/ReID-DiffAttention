@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def cmc_map(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=10):
+def cmc_map(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=1, minp=False):
     """Evaluation with market1501 metric
         Key: for each query identity, its gallery images from the same camera view are discarded.
         """
@@ -19,6 +19,8 @@ def cmc_map(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=10):
     # compute cmc curve for each query
     all_cmc = []
     all_AP = []
+    if minp:
+        all_INP = []
     num_valid_q = 0.  # number of valid query
     for q_idx in range(num_q):
         # get query pid and camid
@@ -38,6 +40,13 @@ def cmc_map(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=10):
             continue
 
         cmc = orig_cmc.cumsum()
+        
+        if minp:
+            pos_idx = np.where(orig_cmc == 1)
+            max_pos_idx = np.max(pos_idx)
+            inp = cmc[max_pos_idx]/ (max_pos_idx + 1.0)
+            all_INP.append(inp) 
+        
         cmc[cmc > 1] = 1
 
         all_cmc.append(cmc[:max_rank])
@@ -57,5 +66,8 @@ def cmc_map(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=10):
     all_cmc = np.asarray(all_cmc).astype(np.float32)
     all_cmc = all_cmc.sum(0) / num_valid_q
     mAP = np.mean(all_AP)
-
-    return all_cmc, mAP
+    if minp:
+        mINP = np.mean(all_INP)
+        return all_cmc, mAP, mINP
+    else:
+        return all_cmc, mAP

@@ -12,11 +12,8 @@ class Regularization(nn.Module):
         for name, param in model.named_parameters():
             if 'weight' in name:
                 weight_list.append(param)
-
-        reg_loss = torch.tensor(0)
-
+        reg_loss = torch.tensor(0.).cuda()
         for w in weight_list:
-            reg = torch.pow(torch.norm(w, p=self.p), self.p)
-            reg_loss = reg_loss + reg
-
+            reg_loss += torch.pow(torch.norm(w, p=self.p), self.p)
         return reg_loss
+

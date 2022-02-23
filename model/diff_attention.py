@@ -5,9 +5,9 @@ from torch import nn
 import torch.nn.functional as F
 
 
-class DiffAttentionNet(nn.Module):
+class DiffAttentionModule(nn.Module):
     def __init__(self, num_feature, in_transform, diff_ratio, out_transform, aggregate=True):
-        super(DiffAttentionNet, self).__init__()
+        super(DiffAttentionModule, self).__init__()
         self.num_feature = num_feature
         self.in_transform = in_transform
         self.diff_ratio = diff_ratio

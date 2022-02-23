@@ -41,31 +41,19 @@ class RandomErasing(object):
 
 
 def get_transform(size, is_train, random_erasing=False):
-    normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    normalize = Normalize(mean=[0.485, 0.456, 0.406],
+                          std=[0.229, 0.224, 0.225])
+    # List transform items.
+    transform_list = []
+    transform_list.append(transforms.Resize(size))
     if is_train:
-        if random_erasing:
-            transform = Compose([
-                transforms.Resize(size),
-                transforms.Pad(10),
-                transforms.RandomCrop(size),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.ToTensor(),
-                normalize,
-                RandomErasing(probability=0.5)
-            ])
-        else:
-            transform = Compose([
-                transforms.Resize(size),
-                transforms.Pad(10),
-                transforms.RandomCrop(size),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.ToTensor(),
-                normalize
-            ])
-    else:
-        transform = Compose([
-            transforms.Resize(size),
-            transforms.ToTensor(),
-            normalize
-        ])
+        transform_list.append(transforms.Pad(10))
+        transform_list.append(transforms.RandomCrop(size))
+        transform_list.append(transforms.RandomHorizontalFlip(p=0.5))
+    transform_list.append(transforms.ToTensor())
+    transform_list.append(normalize)
+    if random_erasing:
+        transform_list.append(RandomErasing(probability=0.5))
+    # Make up transform.
+    transform = Compose(transform_list)
     return transform

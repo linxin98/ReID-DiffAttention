@@ -3,9 +3,9 @@ from torch import nn
 
 
 class CrossEntropyLabelSmooth(nn.Module):
-    def __init__(self, num_classes, epsilon=0.1, use_gpu=False, device=None):
+    def __init__(self, num_class, epsilon=0.1, use_gpu=False, device=None):
         super(CrossEntropyLabelSmooth, self).__init__()
-        self.num_classes = num_classes
+        self.num_class = num_class
         self.epsilon = epsilon
         self.use_gpu = use_gpu
         self.device = device
@@ -16,6 +16,6 @@ class CrossEntropyLabelSmooth(nn.Module):
         targets = torch.zeros(log_probs.size()).scatter_(1, targets.unsqueeze(1).data.cpu(), 1)
         if self.use_gpu:
             targets = targets.to(self.device)
-        targets = (1 - self.epsilon) * targets + self.epsilon / self.num_classes
+        targets = (1 - self.epsilon) * targets + self.epsilon / self.num_class
         loss = (- targets * log_probs).mean(0).sum()
         return loss

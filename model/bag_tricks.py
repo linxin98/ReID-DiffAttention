@@ -169,8 +169,8 @@ class ResNet(nn.Module):
 class Baseline(nn.Module):
     in_planes = 2048
 
-    def __init__(self, num_classes, last_stride=1,
-                 model_path='/root/.cache/torch/hub/checkpoints/resnet50-0676ba61.pth', neck='bnneck',
+    def __init__(self, last_stride=1,
+                 model_path='../resnet50-0676ba61.pth', neck='bnneck',
                  neck_feat='after', model_name='resnet50', pretrain_choice='imagenet'):
         super(Baseline, self).__init__()
         if model_name == 'resnet18':
@@ -267,7 +267,6 @@ class Baseline(nn.Module):
 
         self.gap = nn.AdaptiveAvgPool2d(1)
         # self.gap = nn.AdaptiveMaxPool2d(1)
-        self.num_classes = num_classes
         self.neck = neck
         self.neck_feat = neck_feat
 
@@ -278,10 +277,10 @@ class Baseline(nn.Module):
         elif self.neck == 'bnneck':
             self.bottleneck = nn.BatchNorm1d(self.in_planes)
             self.bottleneck.bias.requires_grad_(False)  # no shift
-            self.classifier = nn.Linear(self.in_planes, self.num_classes, bias=False)
+            # self.classifier = nn.Linear(self.in_planes, self.num_classes, bias=False)
 
             self.bottleneck.apply(weights_init_kaiming)
-            self.classifier.apply(weights_init_classifier)
+            # self.classifier.apply(weights_init_classifier)
 
     def forward(self, x):
 
@@ -294,8 +293,9 @@ class Baseline(nn.Module):
             feat = self.bottleneck(global_feat)  # normalize for angular softmax
 
         if self.training:
-            cls_score = self.classifier(feat)
-            return cls_score, global_feat  # global feature for triplet loss
+            # cls_score = self.classifier(feat)
+            # return cls_score, global_feat  # global feature for triplet loss
+            return global_feat, feat
         else:
             if self.neck_feat == 'after':
                 # print("Test with feature after BN")
